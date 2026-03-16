@@ -3,7 +3,7 @@
 **/**/__pycache__/
 data
 **/py_scripts
-*.txt
+# *.txt
 test*
 molgen_data/*/*
 drugclip_model_weights/*/*

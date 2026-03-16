@@ -3,23 +3,38 @@
 Transformer decoder pipeline for mapping DrugCLIP molecule embeddings to SELFIES token IDs.
 
 ## Setup
+
+### Local Setup
+
 Run the following in a directory where you would like to build the DrugCLIP-MolGen codebase:
 ```bash
-mkdir drugclip_molgen
-cd drugclip_molgen
-
 # clone the DrugCLIP-MolGen repo
 git clone https://github.com/blonn25/DrugCLIP-MolGen.git
 conda create -n drugclip python=3.9 -y
 conda activate drugclip
 python -m pip install -r DrugCLIP-MolGen/docker/requirements.txt
 
-# set up unicore (no cuda, sadly)
+# set up unicore (remove --enable-cuda-ext for CPU-only install)
 git clone https://github.com/dptech-corp/Uni-Core.git
 cd Uni-Core
-python setup.py install	
+python setup.py install	--enable-cuda-ext
 
-# move back into the molgen directory
+# move back into the molgen directory and copy model weights to the directory
+cd ../DrugCLIP-MolGen
+cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/drugclip_model_weights .
+```
+
+### Setup on Wynton
+
+Run the following in a directory where you would like to build the DrugCLIP-MolGen codebase (Uni-Core installed via wheels instead of cloning it):
+```bash
+# clone the DrugCLIP-MolGen repo
+git clone https://github.com/blonn25/DrugCLIP-MolGen.git
+conda create -n drugclip python=3.9 -y
+conda activate drugclip
+python -m pip install -r DrugCLIP-MolGen/docker/requirements_wynton.txt
+
+# move into the molgen directory and copy model weights to the directory
 cd ../DrugCLIP-MolGen
 cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/drugclip_model_weights .
 ```
