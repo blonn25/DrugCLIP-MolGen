@@ -22,6 +22,10 @@ python setup.py install	--enable-cuda-ext
 # move back into the molgen directory and copy model weights to the directory
 cd ../DrugCLIP-MolGen
 cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/drugclip_model_weights .
+
+# copy exisitng model weights and training output to continue training or to use for inference
+mkdir molgen_data/training_output
+cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/molgen_data/training_output/decoder_macbook_air_v2_randmols_seed42 molgen_data/training_output/
 ```
 
 ### Setup on Wynton
@@ -34,9 +38,13 @@ conda create -n drugclip python=3.9 -y
 conda activate drugclip
 python -m pip install -r DrugCLIP-MolGen/docker/requirements_wynton.txt
 
-# move into the molgen directory and copy model weights to the directory
+# move back into the molgen directory and copy model weights to the directory
 cd ../DrugCLIP-MolGen
 cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/drugclip_model_weights .
+
+# copy exisitng model weights and training output to continue training or to use for inference
+mkdir molgen_data/training_output
+cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/molgen_data/training_output/decoder_macbook_air_v2_randmols_seed42 molgen_data/training_output/
 ```
 
 ## Files
@@ -49,6 +57,7 @@ cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/dr
 
 ### Data Preparation Files (see example usage commented at the top of each script)
 
+- `encode_mols.sh` / `encode_pocket.sh`: DrugCLIP scripts to generate molecule embeddings (h5 format) and pockets (lmdb format which can be processed with `molgen_data/encode_pocket_multifold.py`) to create h5 files for inference.
 - `molgen_data/smi_2_selfie.py`: converts SMILES strings to SELFIES strings (and a padded version) in preparation for tokenization.
 - `molgen_data/selfie_2_tokens.py`: converts SELFIES strings to token ID sequences and saves in H5 format for training.
 - `molgen_data/encode_pocket_multifold.py`: encodes pocket pocket and saves an h5 file which can be used for inference with the trained decoder.
