@@ -14,7 +14,7 @@ conda create -n drugclip python=3.9 -y
 conda activate drugclip
 python -m pip install -r DrugCLIP-MolGen/docker/requirements.txt
 
-# set up unicore (remove --enable-cuda-ext for CPU-only install)
+# set up unicore (remove --enable-cuda-ext for CPU-only or MPS gpu install)
 git clone https://github.com/dptech-corp/Uni-Core.git
 cd Uni-Core
 python setup.py install	--enable-cuda-ext
@@ -40,16 +40,29 @@ cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/dr
 ```
 
 ## Files
+
+### Model, Training, and Inference Files (see example usage below)
+
 - `selfies_decoder.py`: model + tokenizer + autoregressive generation.
 - `train_decoder.py`: training loop from `mol_reps` H5 -> `token_ids` H5.
 - `infer_decoder.py`: checkpoint inference; writes token IDs and optional SELFIES/SMILES strings.
+
+### Data Preparation Files (see example usage commented at the top of each script)
+
+- `molgen_data/smi_2_selfie.py`: converts SMILES strings to SELFIES strings (and a padded version) in preparation for tokenization.
+- `molgen_data/selfie_2_tokens.py`: converts SELFIES strings to token ID sequences and saves in H5 format for training.
+- `molgen_data/encode_pocket_multifold.py`: encodes pocket pocket and saves an h5 file which can be used for inference with the trained decoder.
+
+### Inference Post-Processing Files (see example usage commented at the top of each script)
+
+- `molgen_data/build_smi_from_jsonl.py`: builds SMILES from JSONL inference output.
 
 ## Data Assumptions
 - Embeddings H5 contains dataset: `mol_reps` with shape `(N, D)`.
 - Token H5 contains datasets: `token_ids` `(N, L)` and `vocab` `(V,)`.
 - Rows are aligned between embedding and token files.
 
-## Train (recommended starting point)
+## Training Example Usage
 
 ### Large-scale
 ```bash
@@ -98,7 +111,7 @@ Outputs:
 - `decoder_last.pt`
 - `train_history.json`
 
-### Resume Training From Checkpoint
+### Resuming Training From Checkpoint
 Use `--resume-from` with a previous `decoder_last.pt` to continue optimization.
 Set `--epochs` to the final epoch you want to reach (not additional epochs).
 
@@ -126,7 +139,7 @@ python train_decoder.py \
   --resume-from ../molgen_data/training_output/decoder_macbook_air_v2_randmols_seed42/decoder_last.pt
 ```
 
-## Inference
+## Inference Example Usage
 
 ### Infer on first 1000 training samples
 ```bash
