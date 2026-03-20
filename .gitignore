@@ -4,8 +4,10 @@
 data
 **/py_scripts
 # *.txt
+logs/
 test*
-molgen_data/*/*
+molgen_data/*output/*
+molgen_data/*embs/*
 drugclip_model_weights/*/*
 
 # Byte-compiled / optimized / DLL files

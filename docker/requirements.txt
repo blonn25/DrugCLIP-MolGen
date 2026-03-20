@@ -79,3 +79,4 @@ nbstripout      # remove output from jupyter notebooks
 # =============================================
 h5py
 selfies
+zstandard   # for running retreival.sh

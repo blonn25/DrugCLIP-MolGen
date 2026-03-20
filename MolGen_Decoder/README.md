@@ -21,7 +21,9 @@ python setup.py install	--enable-cuda-ext
 
 # move back into the molgen directory and copy model weights to the directory
 cd ../DrugCLIP-MolGen
-cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/drugclip_model_weights .
+mkdir data
+cd data
+cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/data/model_weights .
 
 # copy exisitng model weights and training output to continue training or to use for inference
 mkdir molgen_data/training_output
@@ -40,7 +42,9 @@ python -m pip install -r DrugCLIP-MolGen/docker/requirements_wynton.txt
 
 # move back into the molgen directory and copy model weights to the directory
 cd ../DrugCLIP-MolGen
-cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/drugclip_model_weights .
+mkdir data
+cd data
+cp -r /wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/data/model_weights .
 
 # copy exisitng model weights and training output to continue training or to use for inference
 mkdir molgen_data/training_output

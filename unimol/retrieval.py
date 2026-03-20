@@ -7,6 +7,7 @@
 import logging
 import os
 import sys
+import argparse
 import pickle
 import torch
 from unicore import checkpoint_utils, distributed_utils, options, utils
@@ -23,6 +24,13 @@ logging.basicConfig(
     stream=sys.stdout,
 )
 logger = logging.getLogger("unimol.inference")
+
+# PyTorch 2.6 changed torch.load default to weights_only=True.
+# unicore calls torch.load without this argument, so keep backward-compatible
+# behavior for trusted checkpoints from this project.
+os.environ.setdefault("TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD", "1")
+if hasattr(torch.serialization, "add_safe_globals"):
+    torch.serialization.add_safe_globals([argparse.Namespace])
 
 
 #from skchem.metrics import bedroc_score
@@ -62,7 +70,7 @@ def main(args):
     
     #names, scores = task.retrieve_mols(model, args.mol_path, args.pocket_path, args.emb_dir, 10000)
 
-    task.retrieval_multi_folds(model, args.pocket_path, args.save_path, args.mol_path, fold_version=args.fold_version, use_cache=args.use_cache, use_cuda=use_cuda)
+    task.retrieval_multi_folds(model, args.pocket_path, args.save_path, args.mol_path, fold_version=args.fold_version, use_cache=args.use_cache, use_cuda=use_cuda, frac_to_save=args.frac_to_save, turn_off_scaling=args.turn_off_scaling)
 
 
 def cli_main():
@@ -75,6 +83,8 @@ def cli_main():
     parser.add_argument("--fold-version", type=str, default="6_folds", help="fold version")
     parser.add_argument("--use-cache", type=str, default="", help="whether use pre-encoded embeddings")
     parser.add_argument("--save-path", type=str, default="", help="path for saved result")
+    parser.add_argument("--frac-to-save", type=float, default=0.02, help="fraction of molecules to save per target")
+    parser.add_argument("--turn-off-scaling", action="store_true", help="whether turn off median/MAD scaling")
     options.add_model_args(parser)
     args = options.parse_args_and_arch(parser)
 

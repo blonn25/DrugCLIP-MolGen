@@ -342,7 +342,15 @@ class DrugCLIP(UnicoreTask):
     def load_mols_dataset(self, data_path,atoms,coords, **kwargs):
  
         dataset = LMDBDataset(data_path)
-        label_dataset = KeyDataset(dataset, "label")
+        has_label = False
+        try:
+            if len(dataset) > 0:
+                first_item = dataset[0]
+                has_label = isinstance(first_item, dict) and ("label" in first_item)
+        except Exception:
+            has_label = False
+
+        label_dataset = KeyDataset(dataset, "label") if has_label else None
         dataset = AffinityMolDataset(
             dataset,
             self.args.seed,
@@ -380,27 +388,28 @@ class DrugCLIP(UnicoreTask):
         distance_dataset = PrependAndAppend2DDataset(distance_dataset, 0.0)
 
 
-        nest_dataset = NestedDictionaryDataset(
-            {
-                "net_input": {
-                    "mol_src_tokens": RightPadDataset(
-                        src_dataset,
-                        pad_idx=self.dictionary.pad(),
-                    ),
-                    "mol_src_distance": RightPadDataset2D(
-                        distance_dataset,
-                        pad_idx=0,
-                    ),
-                    "mol_src_edge_type": RightPadDataset2D(
-                        edge_type,
-                        pad_idx=0,
-                    ),
-                },
-                "smi_name": RawArrayDataset(smi_dataset),
-                "target":  RawArrayDataset(label_dataset),
-                "mol_len": RawArrayDataset(len_dataset),
+        nest_dict = {
+            "net_input": {
+                "mol_src_tokens": RightPadDataset(
+                    src_dataset,
+                    pad_idx=self.dictionary.pad(),
+                ),
+                "mol_src_distance": RightPadDataset2D(
+                    distance_dataset,
+                    pad_idx=0,
+                ),
+                "mol_src_edge_type": RightPadDataset2D(
+                    edge_type,
+                    pad_idx=0,
+                ),
             },
-        )
+            "smi_name": RawArrayDataset(smi_dataset),
+            "mol_len": RawArrayDataset(len_dataset),
+        }
+        if has_label:
+            nest_dict["target"] = RawArrayDataset(label_dataset)
+
+        nest_dataset = NestedDictionaryDataset(nest_dict)
         return nest_dataset
     
 
@@ -1678,7 +1687,7 @@ class DrugCLIP(UnicoreTask):
 
 
 
-    def retrieval_multi_folds(self, model, pocket_path, save_path, mol_data_path, fold_version, use_cache=True, use_cuda=True, **kwargs):
+    def retrieval_multi_folds(self, model, pocket_path, save_path, mol_data_path, fold_version, use_cache=True, use_cuda=True, frac_to_save=0.02, turn_off_scaling=False, **kwargs):
         
 
         if fold_version=="6_folds":
@@ -1710,12 +1719,18 @@ class DrugCLIP(UnicoreTask):
             # generate mol data
 
             mol_cache_path=caches[fold]
+            loaded_from_cache = False
             if use_cache:
-                with open(mol_cache_path, "rb") as f:
-                    mol_reps, mol_names = pickle.load(f)
-            else:            
+                try:
+                    with open(mol_cache_path, "rb") as f:
+                        mol_reps, mol_names = pickle.load(f)
+                    loaded_from_cache = True
+                except Exception as e:
+                    print(f"Failed to load cache ({mol_cache_path}): {e}. Falling back to on-the-fly encoding.")
+                    # Keep future folds robust even if cache files are missing/corrupt.
+                    use_cache = False
 
-                
+            if not loaded_from_cache:
                 mol_dataset = self.load_mols_dataset(mol_data_path, "atoms", "coordinates")
                 num_data = len(mol_dataset)
                 bsz=64
@@ -1748,8 +1763,10 @@ class DrugCLIP(UnicoreTask):
                     mol_reps.append(mol_emb)
                     mol_names.extend(sample["smi_name"])
                 mol_reps = np.concatenate(mol_reps, axis=0)
-                with open(mol_cache_path, "wb") as f:
-                    pickle.dump([mol_reps, mol_ids_subsets], f)
+
+                if use_cache:
+                    with open(mol_cache_path, "wb") as f:
+                        pickle.dump([mol_reps, mol_names], f)
 
             
 
@@ -1796,7 +1813,7 @@ class DrugCLIP(UnicoreTask):
         print(res_new.shape)
         res_new = np.mean(res_new, axis=0)
 
-        if fold_version.startswith("6_folds"):
+        if fold_version.startswith("6_folds") and not turn_off_scaling:
             medians = np.median(res_new, axis=1, keepdims=True)
             # get mad for each row
             mads = np.median(np.abs(res_new - medians), axis=1, keepdims=True)
@@ -1813,7 +1830,7 @@ class DrugCLIP(UnicoreTask):
 
         # get top 1%
 
-        lis = lis[:int(len(lis) * 0.02)]
+        lis = lis[:int(len(lis) * frac_to_save)]
 
         
         res_path = save_path
