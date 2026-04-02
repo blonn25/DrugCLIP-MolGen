@@ -153,6 +153,15 @@ def build_parser() -> argparse.ArgumentParser:
             "Default: <output-selfies>.padded"
         ),
     )
+    parser.add_argument(
+        "--output-valid-smi",
+        default=None,
+        help=(
+            "Output .smi file containing only input SMILES that were successfully "
+            "converted to SELFIES, in input order. "
+            "Default: <input_basename>_valid.smi in the input directory."
+        ),
+    )
     return parser
 
 
@@ -207,6 +216,11 @@ def main() -> None:
     args = build_parser().parse_args()
     input_path = Path(args.input)
     output_path = Path(args.output_selfies)
+    valid_smi_path = (
+        Path(args.output_valid_smi)
+        if args.output_valid_smi
+        else input_path.with_name(f"{input_path.stem}_valid.smi")
+    )
     alphabet_path = (
         Path(args.output_alphabet)
         if args.output_alphabet
@@ -237,7 +251,7 @@ def main() -> None:
 
     with input_path.open("r", encoding="utf-8") as fin, output_path.open(
         "w", encoding="utf-8"
-    ) as fout:
+    ) as fout, valid_smi_path.open("w", encoding="utf-8") as fvalid:
         fmap = mapping_path.open("w", encoding="utf-8") if mapping_path else None
         try:
             for line_no, line in enumerate(fin, start=1):
@@ -262,6 +276,11 @@ def main() -> None:
                     encoded = encode_smiles(smi_variant)
                     if encoded is not None:
                         selfies_variants.append(encoded)
+                    else:
+                        print(
+                            f"Skipping line {line_no}: failed to convert SMILES to SELFIES: {smi_variant}",
+                            flush=True,
+                        )
 
                 # Deduplicate while preserving order.
                 selfies_variants = list(dict.fromkeys(selfies_variants))
@@ -286,6 +305,7 @@ def main() -> None:
                     fout.write(" ".join(selfies_variants) + "\n")
                 else:
                     fout.write(selfies_variants[0] + "\n")
+                fvalid.write(smiles + "\n")
 
                 if fmap is not None:
                     record = {
@@ -318,6 +338,7 @@ def main() -> None:
     print(f"Elapsed: {elapsed:.1f}s")
     print(f"Rate: {rate:.1f} mol/s")
     print(f"SELFIES written to: {output_path}")
+    print(f"Valid SMILES written to: {valid_smi_path}")
     if mapping_path:
         print(f"Mapping JSONL written to: {mapping_path}")
 

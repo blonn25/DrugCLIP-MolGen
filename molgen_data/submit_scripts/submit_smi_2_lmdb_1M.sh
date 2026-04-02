@@ -12,7 +12,7 @@
 # mkdir -p logs
 
 # Get the file for this task
-SMI_FILE=/wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/molgen_data/mol_embs/1M_chemstep_seedset/seed_smis_1M.smi
+SMI_FILE=/wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/molgen_data/mol_embs/1M_chemstep_seedset/seed_smis_1M_canonical_valid.smi
 BASENAME=$(basename "$SMI_FILE" .smi)
 OUTPUT_DIR="/wynton/group/bks/work/blonn25/software/drugclip_molgen/DrugCLIP-MolGen/molgen_data/mol_embs/1M_chemstep_seedset"
 mkdir -p "$OUTPUT_DIR"

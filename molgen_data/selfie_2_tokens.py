@@ -16,10 +16,14 @@ Why token_ids are the default training target:
 - For transformer decoders, token IDs + embedding layer + cross-entropy are
   usually more memory-efficient and standard than dense one-hot targets.
 
-Example usage:
+Example usages:
 python selfie_2_tokens.py \
   --input-padded-selfies /Users/beaulonnquist/projects/shoichet_lab/drugclip_mol_gen/DrugCLIP/molgen_data/mol_embs/first_100k.selfies.padded \
   --output-h5 /Users/beaulonnquist/projects/shoichet_lab/drugclip_mol_gen/DrugCLIP/molgen_data/mol_embs/first_100k.selfies.tokens.h5 \
+
+python selfie_2_tokens.py \
+  --input-padded-selfies mol_embs/1M_chemstep_seedset/seed_smis_1M_canonical_valid.selfies.padded \
+  --output-h5 mol_embs/1M_chemstep_seedset/seed_smis_1M_canonical_valid.tokens.h5
 """
 
 from __future__ import annotations
