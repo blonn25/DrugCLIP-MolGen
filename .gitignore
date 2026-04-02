@@ -3,6 +3,7 @@
 **/**/__pycache__/
 data
 **/py_scripts
+.vscode
 # *.txt
 logs/
 test*
